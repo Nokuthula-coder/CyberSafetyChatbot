@@ -2,7 +2,9 @@ name: .NET Core Desktop
 
 on:
   push:
+    branches: ["main"]
   pull_request:
+    branches: ["main"]
     
 jobs:
   build:
@@ -10,16 +12,14 @@ jobs:
     
 steps:
   - uses: actions/checkout@v4
-  
-- name: Setup .NET
+  - name: Setup .NET
     uses: actions/setup-dotnet@v4
 with:
   dotnet-version: '8.0.x'
-  
-- name: Restore
-    run: dotnet restore
-  
-- name: Build
+  - name: Restore
+  run:dotnet restore
+  - name: Build
+  run: dotnet build --no-restore--configuration Release
     run: dotnet build --no-restore --configuration Release
 
   
