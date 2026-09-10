@@ -7,7 +7,7 @@ A C# console chatbot that educates users about Cybersecurity awareness. It inclu
 
 This project was built for PROG6221 Part 1 - 2026.
 
-## Features Implemented (Rubric Q9-Q25)
+## Features Implemented 
 
 - Voice Greeting
     - Plays `greeting.wav` using `System.Media.SoundPlayer`
@@ -90,7 +90,7 @@ Workflow located at `.github/workflows/ci.yml`
 ## YouTube Video Link
 
 Video demonstration of all features:
-https://youtu.be/YOUR_VIDEO_LINK_HERE
+https://youtu.be/txvBXci2mnl
 
 Video shows:
 - Voice greeting playing
