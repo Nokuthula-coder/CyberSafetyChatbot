@@ -10,13 +10,13 @@ namespace CyberSafetyChatbot
         private ResponseHandler responseHandler;
         private VoiceGreeting voiceGreeting;
         private AsciiArt asciiArt;
-        
+         
         //Constructor
         public Chatbot()
         {
             userProfile = new UserProfile();
             responseHandler = new ResponseHandler();
-            voiceGreeting = new VoiceGreeting();
+            voiceGreeting  = new VoiceGreeting();
             asciiArt = new AsciiArt();
 
         }
@@ -138,7 +138,7 @@ namespace CyberSafetyChatbot
                 }
 
                 // Get the chatbot's response based on the user's input.
-                string response = responseHandler.GetResponse(userInput);
+                string response = responseHandler.GetResponse(userInput, userProfile.Name);
 
                 // Display the chatbot's response.
                 Console.WriteLine("------------------------------------------------------------------------------------------------------------");
