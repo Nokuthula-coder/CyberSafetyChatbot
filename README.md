@@ -5,7 +5,7 @@ Student:Nokuthula Mtsweni
 ## Project Overview
 A C# console chatbot that educates users about Cybersecurity awareness. It includes voice greeting, ASCII art logo, personalised conversation, and responds to common cybersecurity questions.
 
-This project was built for PROG6221 Part 1 - 2025.
+This project was built for PROG6221 Part 1 - 2026.
 
 ## Features Implemented (Rubric Q9-Q25)
 
@@ -84,7 +84,8 @@ Workflow located at `.github/workflows/ci.yml`
 - Triggers on push to main/master
 - Steps: checkout, setup .NET 8, restore, build
 
-Check Actions tab for green build.
+<img width="1763" height="1446" alt="Screenshot_10-9-2026_215511_github com" src="https://github.com/user-attachments/assets/6e0a7c1f-da80-4dab-b1a9-a82a686ed4ad" />
+
 
 ## YouTube Video Link
 
