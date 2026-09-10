@@ -42,7 +42,7 @@ This project was built for PROG6221 Part 1 - 2026.
 
 1. Clone repository:
    ```bash
-   git clone https://github.com/YOURUSERNAME/CyberSafetyChatbot-POE-Part1.git
+   git clone https://github.com/Nokuthula-coder/CyberSafetyChatbot-POE-Part1.git
 2. Open `CyberSafetyChatbot.sln` in Visual Studio 2022
 
 3. Make sure `Audio/greeting.wav` properties:
