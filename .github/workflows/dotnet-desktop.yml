@@ -2,6 +2,7 @@ name: .NET CI
 on:
   push:
   pull_request:
+
 jobs:
   build:
     runs-on: windows-latest
@@ -13,20 +14,13 @@ jobs:
         with:
           dotnet-version: '8.0.x'
 
-      - name: Find, restore and build solutions (or projects)
+      - name: Build projects or solutions
         shell: pwsh
         run: |
-          Write-Host "Searching for .sln files..."
-          $slns = Get-ChildItem -Path . -Filter *.sln -Recurse -File -ErrorAction SilentlyContinue
+          $projects = Get-ChildItem -Path . -Filter *.csproj -Recurse -File -ErrorAction SilentlyContinue
 
-          if (-not $slns) {
-            Write-Host "No .sln files found — falling back to .csproj files..."
-            $csprojs = Get-ChildItem -Path . -Filter *.csproj -Recurse -File -ErrorAction SilentlyContinue
-            if (-not $csprojs) {
-              Write-Error "No .sln or .csproj files found in the repository."
-              exit 1
-            }
-            foreach ($p in $csprojs) {
+          if ($projects) {
+            foreach ($p in $projects) {
               Write-Host "Restoring and building project: $($p.FullName)"
               dotnet restore $p.FullName
               dotnet build $p.FullName --no-restore --configuration Release
@@ -34,7 +28,13 @@ jobs:
             exit 0
           }
 
-          foreach ($s in $slns) {
+          $solutions = Get-ChildItem -Path . -Filter *.sln -Recurse -File -ErrorAction SilentlyContinue
+          if (-not $solutions) {
+            Write-Error "No .csproj or .sln files found in the repository."
+            exit 1
+          }
+
+          foreach ($s in $solutions) {
             Write-Host "Restoring and building solution: $($s.FullName)"
             dotnet restore $s.FullName
             dotnet build $s.FullName --no-restore --configuration Release
