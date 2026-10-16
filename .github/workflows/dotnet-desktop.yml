@@ -1,23 +1,41 @@
 name: .NET CI
-
 on:
-    push:
-    pull_request:
-    
+  push:
+  pull_request:
 jobs:
-    build:
-        runs-on: windows-latest
-        
-        steps:
-        - uses: actions/checkout@v4
-        
-        - name: Setup .NET
-          uses: actions/setup-dotnet@v4
-          with:
-            dotnet-version: '8.0.x'
-            
-        - name: Restore
-          run: dotnet restore ./CyberSafetyChatbot.csproj 
-          
-        - name: Build
-          run: dotnet build ./CyberSafetyChatbot.csproj --no-restore --configuration Release
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Find, restore and build solutions (or projects)
+        shell: pwsh
+        run: |
+          Write-Host "Searching for .sln files..."
+          $slns = Get-ChildItem -Path . -Filter *.sln -Recurse -File -ErrorAction SilentlyContinue
+
+          if (-not $slns) {
+            Write-Host "No .sln files found — falling back to .csproj files..."
+            $csprojs = Get-ChildItem -Path . -Filter *.csproj -Recurse -File -ErrorAction SilentlyContinue
+            if (-not $csprojs) {
+              Write-Error "No .sln or .csproj files found in the repository."
+              exit 1
+            }
+            foreach ($p in $csprojs) {
+              Write-Host "Restoring and building project: $($p.FullName)"
+              dotnet restore $p.FullName
+              dotnet build $p.FullName --no-restore --configuration Release
+            }
+            exit 0
+          }
+
+          foreach ($s in $slns) {
+            Write-Host "Restoring and building solution: $($s.FullName)"
+            dotnet restore $s.FullName
+            dotnet build $s.FullName --no-restore --configuration Release
+          }

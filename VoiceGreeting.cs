@@ -1,51 +1,56 @@
 ﻿using System;
 using System.IO;
 using System.Media;
+using System.Threading.Tasks;
 
-namespace CyberSafetyChatbot
+namespace CyberSafetyChatbotGUI
 {
     public class VoiceGreeting
     {
-        public void PlayGreeting()
+        public async Task PlayAsync()
         {
             try
             {
-
-                string path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Audio", "greeting.wav");
-
-                // Fallback if not in Audio folder
+                string path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "greeting.wav");
                 if (!File.Exists(path))
-                    path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "greeting.wav");
+                {
+                    path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "Assets", "greeting.wav");
+                    path = Path.GetFullPath(path);
+                }
 
                 if (File.Exists(path))
                 {
-                    
-                    using ( SoundPlayer player = new SoundPlayer(path))
-                        { 
-
-                        // Play the sound
-                        player.PlaySync();
-                    }
-                 
-                }
-                else
-                {
-                    Console.ForegroundColor = ConsoleColor.DarkYellow;
-                    Console.WriteLine("Voice greeting audio file not found.");
-                    Console.ResetColor();
+                    await Task.Run(() =>
+                    {
+                        using var player = new SoundPlayer(path);
+                        player.Load(); // may throw on bad format
+                        player.Play(); // non-blocking
+                    });
                 }
             }
-
-            catch (Exception ex)
+            catch
             {
-                Console.ForegroundColor= ConsoleColor.Red;
-                Console.WriteLine("Unable to play the voice greeting.");
-                Console.WriteLine("Error: " + ex.Message);
-                Console.ResetColor();
-
-
+                // Swallow exceptions; do not show UI (keep form stable). Consider logging if you add logging later.
             }
-        }
+        }   
     }
 }
-    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
