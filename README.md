@@ -43,8 +43,11 @@ Uses currentTopic for follow-ups and favouriteTopic for personalisation. Sentime
 /.github/workflows/dotnet.yml
 
 ## GitHub / CI Information
-GitHub link: .github/workflows/ci.yml
-Actions: Build on push - check Actions tab
+GitHub link:.github/workflows/dotnet-desktop.yml
+
+<img width="1857" height="902" alt="Screenshot 2026-10-16 at 23-33-41 All workflows" src="https://github.com/user-attachments/assets/26941422-b349-4438-ae5d-70435bb42745" />
+
+
 
 ## Tags and Releases
 - v1.0-console - Part 1: Initial console version
