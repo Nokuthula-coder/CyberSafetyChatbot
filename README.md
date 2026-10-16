@@ -1,3 +1,79 @@
+# PROG6221 Programming 2A - POE Part 2
+
+## Student Details
+Name: Nokuthula Innocentia Mtsweni, Student Number: ST10499051
+
+## Project Overview
+Cybersecurity Awareness Chatbot with GUI, memory, sentiment detection and delegate pattern. Migrated from Part 1 console.
+
+## Part 2 Features
+- GUI with centered form and branding
+- Keyword recognition using Dictionary<string, List<string>>
+- Random responses with single Random instance
+- Conversation flow using currentTopic (tell me more)
+- Memory: UserName, FavouriteTopic stored
+- Sentiment detection: Worried, Curious, Frustrated + supportive response
+- Error handling for blank input
+- Delegate BotResponseHandler to decouple logic from GUI
+- Voice greeting from Assets/greeting.wav
+- ASCII art banner in Consolas font
+
+## Cybersecurity Topics Supported
+password, scam, privacy, phishing, malware, safe browsing
+
+## Memory and Sentiment Features
+Uses currentTopic for follow-ups and favouriteTopic for personalisation. Sentiment examples: worried, curious, frustrated.
+
+## How to Run the Project
+- Open CyberSafetyChatbotGUI.sln
+- Startup project: CyberSafetyChatbotGUI
+- Assets/greeting.wav set to Copy if newer
+- F5 to run in VS 2022,.NET 8.0
+- Test features from page 15 table
+
+## Project Structure
+/CyberSafetyChatbotGUI
+  ChatbotForm.cs 
+  ChatBot.cs 
+  KeywordResponder.cs
+  MemoryStore.cs
+  SentimentDetector.cs
+  VoiceGreeting.cs
+  Assets/greeting.wav
+/.github/workflows/dotnet.yml
+
+## GitHub / CI Information
+GitHub link: .github/workflows/ci.yml
+Actions: Build on push - check Actions tab
+
+## Tags and Releases
+- v1.0-console - Part 1: Initial console version
+- v1.1-refactor - Part 1: Refactored for GUI migration
+- v2.0-gui - Part 2: GUI created and Part 1 features migrated
+- v2.1-dynamic-responses - Part 2: Keyword recognition, random responses and conversation flow added
+- v2.2-memory-sentiment - Part 2: Memory, sentiment detection, validation and final polish completed
+
+## Video Presentation Link
+[YouTube / Drive link with own voice]
+
+
+
+
+
+## References
+
+- Microsoft, 2024. _SoundPlayer Class (System.Media)_. Available at: https://learn.microsoft.com/en-us/dotnet/api/system.media.soundplayer [Accessed: 15 October 2026]
+
+- Microsoft, 2024. _How to: Play a Sound from a Windows Form_. Available at: https://learn.microsoft.com/en-us/dotnet/desktop/winforms/media/how-to-play-a-sound [Accessed: 15 October 2026]
+
+
+## Author
+
+Student: Nokuthula Innocentia Mtsweni
+
+
+
+
 #Cyber Safety Awareness Bot - part 1- PROG6221
 Student:Nokuthula Mtsweni
 
