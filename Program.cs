@@ -1,21 +1,17 @@
 ﻿using System;
+using System.Windows.Forms;
+using static System.Windows.Forms.DataFormats;
 
-
-namespace CyberSafetyChatbot
+namespace CyberSafetyChatbotGUI
 {
-    internal class Program
+
+    internal static class Program
     {
-        static void Main(string[] args)
+        [STAThread]
+        static void Main()
         {
-            //Front door of application
-            // its job is to create your chatbot object  and start the program
-
-            Chatbot bot = new Chatbot();
-
-        // Start the chatbot
-        bot.Start();
-
+            ApplicationConfiguration.Initialize();
+            Application.Run(new ChatbotForm());
         }
     }
 }
-   
