@@ -57,8 +57,7 @@ GitHub link:.github/workflows/dotnet-desktop.yml
 - v2.2-memory-sentiment - Part 2: Memory, sentiment detection, validation and final polish completed
 
 ## Video Presentation Link
-[YouTube / Drive link with own voice]
-
+https://youtu.be/FPN5bvyXfDE
 
 
 
