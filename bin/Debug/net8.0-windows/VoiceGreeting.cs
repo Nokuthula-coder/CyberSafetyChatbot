@@ -1,41 +1,49 @@
-﻿using System;
+﻿4 using System;
 using System.IO;
 using System.Media;
 using System.Threading.Tasks;
 
-namespace CyberSafetyChatbotGUI
+namespace CybersecurityChatbotGUI
 {
     public class VoiceGreeting
     {
-        public async Task PlayAsync()
+        public void PlayWelcome()
+        {
+            // Run on background thread so it doesn't block UI
+            Task.Run(() => PlayGreetingAsync());
+        }
+
+        private async Task PlayGreetingAsync()
         {
             try
             {
-                string path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "greeting.wav");
-                if (!File.Exists(path))
+                string soundPath = Path.Combine(AppContext.BaseDirectory, "Assets", "greeting.wav");
+
+                Console.WriteLine($"Looking for greeting.wav at: {soundPath}");
+                Console.WriteLine($"File exists: {File.Exists(soundPath)}");
+
+                if (!File.Exists(soundPath))
                 {
-                    path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "Assets", "greeting.wav");
-                    path = Path.GetFullPath(path);
+                    Console.WriteLine($"Greeting sound not found.");
+                    Console.WriteLine($"Current directory: {Directory.GetCurrentDirectory()}");
+                    Console.WriteLine($"Files in directory: {string.Join(", ", Directory.GetFiles(AppContext.BaseDirectory, "*.wav"))}");
+                    return;
                 }
 
-                if (File.Exists(path))
+                // Simple direct playback using SoundPlayer
+                using (SoundPlayer player = new SoundPlayer(soundPath))
                 {
-                    await Task.Run(() =>
-                    {
-                        using var player = new SoundPlayer(path);
-                        player.Load(); // may throw on bad format
-                        player.Play(); // non-blocking
-                    });
+                    player.PlaySync();
+                    Console.WriteLine("Greeting played successfully!");
                 }
             }
-            catch
+            catch (Exception ex)
             {
-                // Swallow exceptions; do not show UI (keep form stable). Consider logging if you add logging later.
+                Console.WriteLine($"Error playing greeting: {ex.Message}");
             }
-        }   
+        }
     }
 }
-
 
 
 
