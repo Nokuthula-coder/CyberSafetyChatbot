@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 
 
 namespace CyberSafetyChatbot
@@ -10,13 +10,13 @@ namespace CyberSafetyChatbot
         private ResponseHandler responseHandler;
         private VoiceGreeting voiceGreeting;
         private AsciiArt asciiArt;
-         
+
         //Constructor
         public Chatbot()
         {
             userProfile = new UserProfile();
             responseHandler = new ResponseHandler();
-            voiceGreeting  = new VoiceGreeting();
+            voiceGreeting = new VoiceGreeting();
             asciiArt = new AsciiArt();
 
         }
@@ -106,12 +106,12 @@ namespace CyberSafetyChatbot
             {
                 Console.WriteLine();
 
-                Console.ForegroundColor= ConsoleColor.Blue;
+                Console.ForegroundColor = ConsoleColor.Blue;
                 Console.Write($"{userProfile.Name}:  ");
 
                 Console.ResetColor();
 
-                string userInput = Console.ReadLine() ??"";
+                string userInput = Console.ReadLine() ?? "";
 
                 // Validate the user's input.
                 if (string.IsNullOrWhiteSpace(userInput))
@@ -150,4 +150,3 @@ namespace CyberSafetyChatbot
         }
     }
 }
-
