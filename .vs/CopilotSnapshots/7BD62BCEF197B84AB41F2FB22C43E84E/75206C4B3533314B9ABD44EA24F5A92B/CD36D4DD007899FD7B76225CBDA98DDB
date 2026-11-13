@@ -1,0 +1,10 @@
+﻿namespace CyberSafetyChatbotGUI.Data
+{
+    public static class DataBaseConfig
+    {
+        public static string? ConnectionString =>
+            Environment.GetEnvironmentVariable("CYBERSAFETY_MYSQL_CONNECTION");
+
+        public static bool IsConfigured => !string.IsNullOrWhiteSpace(ConnectionString);
+    }
+}
