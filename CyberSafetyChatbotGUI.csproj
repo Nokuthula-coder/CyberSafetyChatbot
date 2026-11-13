@@ -20,19 +20,12 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Remove="VoiceGreeting.cs" />
-  </ItemGroup>
-
-  <ItemGroup>
     <None Remove="Assets\greeting.wav" />
   </ItemGroup>
 
   <ItemGroup>
     <Content Include="Assets\greeting.wav">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="VoiceGreeting.cs">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
 
