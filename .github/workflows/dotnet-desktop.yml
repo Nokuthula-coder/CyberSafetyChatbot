@@ -2,25 +2,35 @@ name: CI
 
 on:
   push:
-    branches: [ master ]
+    branches: [main, master]
   pull_request:
-    branches: [ master ]
+    branches: [main, master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
 
 jobs:
   build:
     runs-on: windows-latest
 
     steps:
-    - uses: actions/checkout@v4
+      - name: Check out repository
+        uses: actions/checkout@v4
 
-    - name: Setup MSBuild
-      uses: microsoft/setup-msbuild@v2
+      - name: Set up .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
 
-    - name: Setup NuGet
-      uses: NuGet/setup-nuget@v2
+      - name: Restore solution
+        run: dotnet restore CyberSafetyChatbot.sln
 
-    - name: Restore NuGet packages
-      run: nuget restore CyberSafetyChatbot.sln
+      - name: Build solution
+        run: dotnet build CyberSafetyChatbot.sln --configuration Release --no-restore
 
-    - name: Build Solution
-      run: msbuild CyberSafetyChatbot.sln /p:Configuration=Release
+      - name: Restore GUI project
+        run: dotnet restore CyberSafetyChatbotGUI.csproj
+
+      - name: Build GUI project
+        run: dotnet build CyberSafetyChatbotGUI.csproj --configuration Release --no-restore
