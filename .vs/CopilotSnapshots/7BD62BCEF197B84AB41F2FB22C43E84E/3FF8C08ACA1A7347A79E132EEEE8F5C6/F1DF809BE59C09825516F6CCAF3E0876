@@ -1,0 +1,81 @@
+﻿using CyberSafetyChatbotGUI.Models;
+
+namespace CyberSafetyChatbotGUI.Services
+{
+    public sealed class QuizManager
+    {
+        private readonly IReadOnlyList<QuizQuestion> questions = new List<QuizQuestion>
+        {
+            new()
+            {
+                Id = 1,
+                Question = "Which is the safest response to an unexpected password-reset email?",
+                Options = new[] { "Click the link immediately", "Verify it through the official website", "Reply with your password" },
+                CorrectOptionIndex = 1,
+                Explanation = "Open the official website yourself rather than trusting an unexpected link."
+            },
+            new()
+            {
+                Id = 2,
+                Question = "What makes a password stronger?",
+                Options = new[] { "Using your birthday", "Reusing one password everywhere", "Using a long, unique passphrase" },
+                CorrectOptionIndex = 2,
+                Explanation = "Long, unique passwords reduce the impact of a compromised account."
+            },
+            new()
+            {
+                Id = 3,
+                Question = "What should you do with a suspicious attachment?",
+                Options = new[] { "Open it to check", "Forward it to friends", "Verify the sender and scan it first" },
+                CorrectOptionIndex = 2,
+                Explanation = "Verify the sender and scan unexpected attachments before opening them."
+            },
+            new()
+            {
+                Id = 4,
+                Question = "Which action improves account security most directly?",
+                Options = new[] { "Enable multi-factor authentication", "Share an OTP with support", "Disable updates" },
+                CorrectOptionIndex = 0,
+                Explanation = "Multi-factor authentication adds protection beyond the password."
+            },
+            new()
+            {
+                Id = 5,
+                Question = "What is a safe approach on public Wi-Fi?",
+                Options = new[] { "Use online banking without protection", "Avoid sensitive activity or use a trusted VPN", "Turn off device security" },
+                CorrectOptionIndex = 1,
+                Explanation = "Avoid sensitive activity on untrusted networks or use a trusted VPN."
+            }
+        };
+
+        private int score;
+        private int answered;
+
+        public IReadOnlyList<QuizQuestion> Questions => questions;
+        public int Score => score;
+        public int Answered => answered;
+
+        public void Reset()
+        {
+            score = 0;
+            answered = 0;
+        }
+
+        public QuizAnswerResult SubmitAnswer(QuizQuestion question, int selectedOptionIndex)
+        {
+            bool isCorrect = selectedOptionIndex == question.CorrectOptionIndex;
+            if (isCorrect)
+                score++;
+
+            answered++;
+            return new QuizAnswerResult
+            {
+                QuestionId = question.Id,
+                IsCorrect = isCorrect,
+                Score = score,
+                TotalQuestions = questions.Count,
+                Feedback = isCorrect ? "Correct! " + question.Explanation : "Not quite. " + question.Explanation
+            };
+        }
+    }
+}
