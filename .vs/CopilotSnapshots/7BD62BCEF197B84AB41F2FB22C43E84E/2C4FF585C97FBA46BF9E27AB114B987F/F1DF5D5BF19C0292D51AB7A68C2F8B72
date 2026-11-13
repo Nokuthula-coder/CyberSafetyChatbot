@@ -1,0 +1,47 @@
+﻿using System.Text.RegularExpressions;
+
+namespace CyberSafetyChatbotGUI.Services
+{
+    public sealed class NlpProcessor
+    {
+        public NlpResult Analyze(string input)
+        {
+            string text = (input ?? string.Empty).Trim();
+            string normalized = text.ToLowerInvariant();
+            string intent = normalized switch
+            {
+                _ when normalized.Contains("password") => "PasswordSafety",
+                _ when normalized.Contains("phish") || normalized.Contains("email") => "Phishing",
+                _ when normalized.Contains("malware") || normalized.Contains("virus") => "Malware",
+                _ when normalized.Contains("privacy") || normalized.Contains("personal data") => "Privacy",
+                _ when normalized.Contains("quiz") => "Quiz",
+                _ when normalized.Contains("task") || normalized.Contains("remind") => "TaskManagement",
+                _ when normalized.Contains("hello") || normalized.Contains("hi") => "Greeting",
+                _ => "Unknown"
+            };
+
+            List<string> entities = Regex.Matches(text, @"\b(password|phishing|malware|privacy|quiz|task|reminder)\w*\b", RegexOptions.IgnoreCase)
+                .Select(match => match.Value)
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
+            return new NlpResult
+            {
+                OriginalText = text,
+                NormalizedText = normalized,
+                Intent = intent,
+                Entities = entities,
+                Confidence = intent == "Unknown" ? 0.35 : 0.92
+            };
+        }
+    }
+
+    public sealed class NlpResult
+    {
+        public string OriginalText { get; init; } = string.Empty;
+        public string NormalizedText { get; init; } = string.Empty;
+        public string Intent { get; init; } = "Unknown";
+        public IReadOnlyList<string> Entities { get; init; } = Array.Empty<string>();
+        public double Confidence { get; init; }
+    }
+}
