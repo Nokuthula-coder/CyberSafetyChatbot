@@ -1,0 +1,863 @@
+using MySql.Data.MySqlClient;
+using CyberSafetyChatbotGUI.Services;
+using CyberSafetyChatbotGUI.Data;
+using CyberSafetyChatbotGUI.Models;
+using System;
+using System.Collections.Generic;
+using System.Drawing;
+using System.IO;
+using System.Media;
+using System.Windows.Forms;
+
+namespace CyberSafetyChatbotGUI
+{
+    public partial class MainForm : Form
+    {
+        private void TestDatabaseConnection()
+        {
+            try
+            {
+                using (MySqlConnection connection =
+                new MySqlConnection(DataBaseConfig.ConnectionString))
+                {
+                    connection.Open();
+                    MessageBox.Show("Database connection successful.");
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Database connection failed: " + ex.Message);
+            }
+        }
+        // ONE instance only - if you create new ChatBot in btnSend_Click memory will reset
+        private ChatBot chatBot = new ChatBot();
+
+        // Runtime UI: topics list to help test keyword recognition (Step 5)
+        private ListBox? lstTopics;
+        private Label? lblTopics;
+        private Label? lblSentiment; // Step 9: sentiment indicator
+        private Label? lblSentimentMatches; // Step C: show matched sentiment words
+        private readonly ITaskRepository taskRepository;
+        private readonly InMemoryTaskRepository fallbackTaskRepository = new();
+        private readonly QuizManager quizManager = new();
+        private readonly NlpProcessor nlpProcessor = new();
+        private readonly ActivityLogger activityLogger = new();
+        private DataGridView? dgvActivity;
+        private ListBox? lstActivity;
+        private int activityLimit = 5;
+        private Label? lblQuizQuestion;
+        private Label? lblQuizScore;
+        private Label? lblQuizFeedback;
+        private readonly List<RadioButton> quizOptionButtons = new();
+        private Button? btnStartQuiz;
+        private Button? btnSubmitQuizAnswer;
+        private Button? btnNextQuestion;
+        private TextBox? txtNlpInput;
+        private Label? lblNlpResult;
+        private TabPage? activityPage;
+        private Label? lblTaskStatus;
+        private Button? btnCompleteTask;
+        private Button? btnDeleteTask;
+        private Button? btnRefreshTasks;
+
+        public MainForm()
+        {
+            InitializeComponent();
+            taskRepository = DataBaseConfig.IsConfigured
+                ? new MySqlTaskRepository(DataBaseConfig.ConnectionString!)
+                : fallbackTaskRepository;
+
+
+            // Subscribe to bot responses via the event
+            chatBot.ResponseHandler += DisplayBotResponse;
+
+            // Enable Enter key handling for the form
+            this.KeyPreview = true;
+            this.KeyDown += ChatbotForm_KeyDown;
+
+            // Make Enter press the Send button
+            this.AcceptButton = btnSend;
+        }
+
+        private void ChatbotForm_Load(object? sender, EventArgs e)
+        {
+            // ASCII banner styling
+            rtbBanner.BackColor = Color.Black;
+            rtbBanner.ForeColor = Color.Lime;
+            rtbBanner.Font = new Font("Consolas", 9, FontStyle.Bold);
+            rtbBanner.ReadOnly = true;
+            rtbBanner.Text = @"
+   ----                     _____     __           ____     ___   
+  / __/__ ______ _________ / ___/_ __/ /  ___ ____/ __/__ _/ _/__ 
+ _\ \/ -_) __/ // / __/ -_) /__/ // / _ \/ -_) __/\ \/ _ `/ _/ -_)
+/___/\__/\__/\_,_/_/  \__/\___/\_, /_.__/\__/_/ /___/\_,_/_/ \__/ 
+                              /___/                               
+
+                     STAY SAFE ONLINE!";
+
+            // Welcome message
+            rtbChatHistory.AppendText($"[{DateTime.Now:HH:mm}] Bot: Hello! I am CyberSafetyChatbot. I can help you with tips to stay safe online. Ask me about passwords, phishing, malware, privacy, or links.\n\n");
+
+            // Attempt to play greeting (non-fatal)
+            PlayGreeting();
+
+            BuildPart3Interface();
+            InitializeSentimentIndicator(); // Step 9 UI
+            RefreshTasks();
+        }
+
+        private void BuildPart3Interface()
+        {
+            ClientSize = new Size(1240, 720);
+            tabChat.Controls.Clear();
+            tabChat.Location = new Point(35, 45);
+            tabChat.Size = new Size(1165, 625);
+            TabPage chatPage = new("Chat") { UseVisualStyleBackColor = true };
+            activityPage = new TabPage("Activity") { UseVisualStyleBackColor = true };
+            tabPage1.Text = "Tasks";
+            tabPage2.Text = "Quiz";
+            tabPage3.Text = "Unused";
+            tabPage1.Controls.Clear();
+            tabPage2.Controls.Clear();
+            tabPage3.Controls.Clear();
+            tabChat.Controls.Add(chatPage);
+            tabChat.Controls.Add(tabPage1);
+            tabChat.Controls.Add(tabPage2);
+            tabChat.Controls.Add(activityPage);
+            BuildChatTab(chatPage);
+            BuildTaskTab();
+            BuildQuizTab();
+            BuildNlpActivityTab();
+        }
+
+        private void BuildChatTab(TabPage chatPage)
+        {
+            rtbBanner.Location = new Point(18, 18);
+            rtbBanner.Size = new Size(1100, 145);
+            rtbChatHistory.Location = new Point(18, 180);
+            rtbChatHistory.Size = new Size(1100, 300);
+            txtUserInput.Location = new Point(18, 500);
+            txtUserInput.Size = new Size(930, 25);
+            btnSend.Location = new Point(960, 498);
+            chatPage.Controls.AddRange(new Control[] { rtbBanner, rtbChatHistory, txtUserInput, btnSend });
+        }
+
+        private void BuildTaskTab()
+        {
+            Label titleLabel = new() { Text = "Task title", Location = new Point(18, 18), AutoSize = true };
+            txtTaskTitle.Location = new Point(18, 42);
+            txtTaskTitle.Size = new Size(520, 25);
+            txtTaskDescription.Location = new Point(18, 82);
+            txtTaskDescription.Size = new Size(520, 55);
+            txtTaskDescription.Multiline = true;
+            txtTaskDescription.PlaceholderText = "Describe the cybersecurity task";
+            chkUseReminder.Location = new Point(18, 150);
+            chkUseReminder.Text = "Set reminder";
+            dtpReminder.Location = new Point(130, 146);
+            dtpReminder.Size = new Size(220, 25);
+            buttonAddTask.Location = new Point(365, 145);
+            buttonAddTask.Size = new Size(105, 30);
+            buttonAddTask.Text = "Add task";
+            buttonAddTask.Click -= buttonAddTask_Click;
+            buttonAddTask.Click += buttonAddTask_Click;
+            dgvTasks.Location = new Point(18, 190);
+            dgvTasks.Size = new Size(520, 350);
+            dgvTasks.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+            dgvTasks.AutoGenerateColumns = true;
+            dgvTasks.ReadOnly = true;
+            dgvTasks.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
+            dgvTasks.MultiSelect = false;
+            btnCompleteTask = new Button { Name = "btnCompleteTask", Location = new Point(18, 550), Size = new Size(125, 30), Text = "Complete" };
+            btnCompleteTask.Click += CompleteSelectedTask;
+            btnDeleteTask = new Button { Name = "btnDeleteTask", Location = new Point(153, 550), Size = new Size(100, 30), Text = "Delete" };
+            btnDeleteTask.Click += DeleteSelectedTask;
+            btnRefreshTasks = new Button { Name = "btnRefreshTasks", Location = new Point(263, 550), Size = new Size(105, 30), Text = "Refresh" };
+            btnRefreshTasks.Click += btnRefreshTasks_Click;
+            lblTaskStatus = new Label { Location = new Point(18, 590), AutoSize = true, ForeColor = Color.DimGray };
+            tabPage1.Controls.AddRange(new Control[] { titleLabel, txtTaskTitle, txtTaskDescription, chkUseReminder, dtpReminder, buttonAddTask, dgvTasks, btnCompleteTask, btnDeleteTask, btnRefreshTasks, lblTaskStatus });
+            dgvTasks.DoubleClick -= DgvTasks_DoubleClick;
+            dgvTasks.DoubleClick += DgvTasks_DoubleClick;
+        }
+
+        private void DeleteSelectedTask(object? sender, EventArgs e)
+        {
+            if (dgvTasks.CurrentRow?.DataBoundItem is not CyberTask task)
+                return;
+
+            if (MessageBox.Show($"Delete '{task.Title}'?", "Task", MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes)
+                return;
+
+            if (taskRepository.Delete(task.Id))
+            {
+                activityLogger.Log("Task", $"Deleted: {task.Title}", "Success");
+                RefreshTasks();
+                RefreshActivityGrid();
+            }
+        }
+
+        private void BuildQuizTab()
+        {
+            lblQuizQuestion = new Label { Location = new Point(18, 24), Size = new Size(520, 70), AutoSize = false };
+            lblQuizFeedback = new Label { Size = new Size(520, 45), AutoSize = false };
+            lblQuizScore = new Label { Text = "Score: 0/0", AutoSize = true };
+
+            quizOptionButtons.Clear();
+            int optionCount = 0;
+            foreach (QuizQuestion question in quizManager.Questions)
+                optionCount = Math.Max(optionCount, question.Options.Count);
+
+            for (int i = 0; i < optionCount; i++)
+            {
+                RadioButton option = new()
+                {
+                    Name = $"rdoQuizOption{i + 1}",
+                    Location = new Point(18, 110 + i * 36),
+                    Size = new Size(520, 34),
+                    TextAlign = ContentAlignment.MiddleLeft
+                };
+                quizOptionButtons.Add(option);
+                tabPage2.Controls.Add(option);
+            }
+
+            int controlsTop = 120 + optionCount * 36;
+            btnSubmitQuizAnswer = new Button { Text = "Submit answer", Location = new Point(18, controlsTop), Width = 150 };
+            btnNextQuestion = new Button { Text = "Next question", Location = new Point(180, controlsTop), Width = 150, Enabled = false };
+            Button restart = new() { Text = "Restart quiz", Location = new Point(342, controlsTop), Width = 130 };
+            lblQuizFeedback.Location = new Point(18, controlsTop + 42);
+            lblQuizScore.Location = new Point(18, controlsTop + 95);
+            Label instructions = new() { Text = "Choose the safest answer for each cybersecurity scenario.", Location = new Point(18, controlsTop + 125), AutoSize = true };
+
+            btnSubmitQuizAnswer.Click += SubmitQuizAnswer;
+            btnNextQuestion.Click += NextQuizQuestion;
+            restart.Click += (_, _) => StartQuiz();
+            tabPage2.Controls.AddRange(new Control[] { lblQuizQuestion, btnSubmitQuizAnswer, btnNextQuestion, restart, lblQuizFeedback, lblQuizScore, instructions });
+            StartQuiz();
+        }
+
+        private void BuildNlpActivityTab()
+        {
+            Label nlpLabel = new() { Text = "NLP simulation input", Location = new Point(18, 18), AutoSize = true };
+            txtNlpInput = new TextBox { Location = new Point(18, 43), Width = 520 };
+            Button analyze = new() { Text = "Analyze", Location = new Point(18, 78), Width = 110 };
+            lblNlpResult = new Label { Location = new Point(18, 115), Size = new Size(520, 75), AutoSize = false };
+            Label activityLabel = new() { Text = "Recent activity", Location = new Point(18, 210), AutoSize = true };
+            lstActivity = new ListBox
+            {
+                Name = "lstActivity",
+                Location = new Point(18, 235),
+                Size = new Size(1100, 280),
+                HorizontalScrollbar = true,
+                IntegralHeight = false
+            };
+            Button refreshActivity = new()
+            {
+                Name = "btnRefreshActivity",
+                Text = "Refresh",
+                Location = new Point(18, 530),
+                Size = new Size(110, 30)
+            };
+            Button showMore = new()
+            {
+                Name = "btnShowMore",
+                Text = "Show more",
+                Location = new Point(140, 530),
+                Size = new Size(120, 30)
+            };
+            analyze.Click += AnalyzeNlp;
+            refreshActivity.Click += RefreshActivity;
+            showMore.Click += ShowMoreActivity;
+            activityPage!.Controls.AddRange(new Control[] { nlpLabel, txtNlpInput, analyze, lblNlpResult, activityLabel, lstActivity, refreshActivity, showMore });
+            RefreshActivityGrid();
+        }
+
+        private void buttonAddTask_Click(object? sender, EventArgs e)
+        {
+            if (string.IsNullOrWhiteSpace(txtTaskTitle.Text) || string.IsNullOrWhiteSpace(txtTaskDescription.Text))
+            {
+                lblTaskStatus!.Text = "Please enter both a task title and description.";
+                return;
+            }
+
+            CyberTask task = new()
+            {
+                Title = txtTaskTitle.Text.Trim(),
+                Description = txtTaskDescription.Text.Trim(),
+                ReminderAt = chkUseReminder.Checked ? dtpReminder.Value : null
+            };
+            try
+            {
+                taskRepository.Add(task);
+                activityLogger.Log("Task", $"Added: {task.Title}", "Success");
+                txtTaskTitle.Clear();
+                txtTaskDescription.Clear();
+                chkUseReminder.Checked = false;
+                lblTaskStatus!.Text = $"Task added successfully (ID {task.TaskId}).";
+                RefreshTasks();
+                RefreshActivityGrid();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Could not save the task: {ex.Message}", "Database", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            }
+        }
+
+        private CyberTask? GetSelectedTask()
+        {
+            return dgvTasks.CurrentRow?.DataBoundItem as CyberTask;
+        }
+
+        private void CompleteSelectedTask(object? sender, EventArgs e)
+        {
+            CyberTask? task = GetSelectedTask();
+            if (task is null)
+            {
+                lblTaskStatus!.Text = "Please select a task first.";
+                return;
+            }
+
+            try
+            {
+                task.IsCompleted = true;
+                if (!taskRepository.Update(task))
+                    throw new InvalidOperationException("The selected task could not be updated.");
+
+                activityLogger.Log("Task", $"Task completed: {task.Title}", "Success");
+                lblTaskStatus!.Text = "Task marked as completed.";
+                RefreshTasks();
+                RefreshActivityGrid();
+            }
+            catch (Exception ex)
+            {
+                lblTaskStatus!.Text = $"Could not complete task: {ex.Message}";
+            }
+        }
+
+        private void DgvTasks_DoubleClick(object? sender, EventArgs e)
+        {
+            CyberTask? task = GetSelectedTask();
+            if (task is null)
+                return;
+
+            task.IsCompleted = !task.IsCompleted;
+            if (taskRepository.Update(task))
+            {
+                activityLogger.Log("Task", $"Updated: {task.Title}", task.IsCompleted ? "Completed" : "Reopened");
+                RefreshTasks();
+                RefreshActivityGrid();
+            }
+        }
+
+        private void RefreshTasks()
+        {
+            if (lblTaskStatus is not null)
+            {
+                if (!DataBaseConfig.IsConfigured)
+                    lblTaskStatus.Text = "Task list loaded from in-memory storage; configure MySQL for persistence.";
+                else if (DataBaseConfig.TryOpenConnection(out string connectionError))
+                    lblTaskStatus.Text = "Task list refreshed from MySQL.";
+                else
+                    lblTaskStatus.Text = $"Database unavailable: {connectionError}";
+            }
+
+            try
+            {
+                dgvTasks.DataSource = null;
+                dgvTasks.DataSource = taskRepository.GetAll();
+                if (dgvTasks.Columns.Count > 0)
+                {
+                    dgvTasks.Columns[nameof(CyberTask.Id)].Visible = false;
+                    dgvTasks.Columns[nameof(CyberTask.CreatedAt)].Visible = false;
+                }
+            }
+
+            catch
+            {
+                dgvTasks.DataSource = fallbackTaskRepository.GetAll();
+            }
+        }
+
+        private void btnRefreshTasks_Click(object? sender, EventArgs e)
+        {
+            RefreshTasks();
+            if (lblTaskStatus is not null && DataBaseConfig.IsConfigured)
+                lblTaskStatus.Text = "Task list refreshed from MySQL.";
+        }
+
+        private void StartQuiz()
+        {
+            quizManager.StartQuiz();
+            ShowQuizQuestion(quizManager.CurrentIndex);
+            foreach (RadioButton option in quizOptionButtons)
+                option.Enabled = true;
+            btnNextQuestion!.Enabled = false;
+            btnSubmitQuizAnswer!.Enabled = true;
+            lblQuizFeedback!.Text = string.Empty;
+        }
+
+        private void ShowQuizQuestion(int index)
+        {
+            if (index >= quizManager.Questions.Count)
+            {
+                lblQuizQuestion!.Text = $"Quiz complete. Final score: {quizManager.Score}/{quizManager.Questions.Count}";
+            foreach (RadioButton option in quizOptionButtons)
+                option.Visible = false;
+            btnSubmitQuizAnswer!.Enabled = false;
+            btnNextQuestion!.Enabled = false;
+                return;
+            }
+
+            QuizQuestion question = quizManager.Questions[index];
+            lblQuizQuestion!.Text = $"{index + 1}. {question.Question}";
+            for (int i = 0; i < quizOptionButtons.Count; i++)
+            {
+                RadioButton option = quizOptionButtons[i];
+                option.Checked = false;
+                option.Visible = i < question.Options.Count;
+                if (option.Visible)
+                    option.Text = question.Options[i];
+            }
+            btnSubmitQuizAnswer!.Enabled = true;
+            btnNextQuestion!.Enabled = false;
+            lblQuizScore!.Text = $"Score: {quizManager.Score}/{quizManager.Answered}";
+        }
+
+        private int GetSelectedQuizOption()
+        {
+            for (int i = 0; i < quizOptionButtons.Count; i++)
+            {
+                if (quizOptionButtons[i].Checked)
+                    return i;
+            }
+
+            return -1;
+        }
+
+        private void SubmitQuizAnswer(object? sender, EventArgs e)
+        {
+            int selectedIndex = GetSelectedQuizOption();
+            if (selectedIndex < 0)
+            {
+                lblQuizFeedback!.Text = "Please select an answer.";
+                return;
+            }
+
+            QuizAnswerResult result = quizManager.CheckAnswer(selectedIndex);
+            activityLogger.Log("Quiz", $"Question {quizManager.CurrentIndex + 1}", result.IsCorrect ? "Correct" : "Incorrect");
+            lblQuizFeedback!.Text = result.Feedback;
+            foreach (RadioButton option in quizOptionButtons)
+                option.Enabled = false;
+            btnSubmitQuizAnswer!.Enabled = false;
+            btnNextQuestion!.Enabled = quizManager.CurrentIndex < quizManager.TotalQuestions - 1;
+            lblQuizScore!.Text = $"Score: {quizManager.Score}/{quizManager.Answered}";
+            RefreshActivityGrid();
+        }
+
+        private void NextQuizQuestion(object? sender, EventArgs e)
+        {
+            if (quizManager.MoveNext())
+            {
+                foreach (RadioButton option in quizOptionButtons)
+                    option.Enabled = true;
+                lblQuizFeedback!.Text = string.Empty;
+                ShowQuizQuestion(quizManager.CurrentIndex);
+            }
+            else
+            {
+                lblQuizQuestion!.Text = $"Quiz complete. Final score: {quizManager.Score}/{quizManager.TotalQuestions}";
+                lblQuizFeedback!.Text = "You have completed the cybersecurity quiz.";
+                btnNextQuestion!.Enabled = false;
+            }
+        }
+
+        private void AnalyzeNlp(object? sender, EventArgs e)
+        {
+            NlpResult result = nlpProcessor.Analyze(txtNlpInput?.Text ?? string.Empty);
+            lblNlpResult!.Text = $"Intent: {result.Intent}\nConfidence: {result.Confidence:P0}\nEntities: {string.Join(", ", result.Entities.DefaultIfEmpty("none"))}";
+            activityLogger.Log("NLP", result.OriginalText, result.Intent);
+            RefreshActivityGrid();
+        }
+
+        private void RefreshActivityGrid()
+        {
+            if (lstActivity is null)
+                return;
+
+            lstActivity.BeginUpdate();
+            lstActivity.Items.Clear();
+            foreach (ActivityEntry entry in activityLogger.Entries.Take(activityLimit))
+            {
+                lstActivity.Items.Add($"[{entry.Timestamp:HH:mm:ss}] {entry.ActivityType}: {entry.Description} ({entry.Outcome})");
+            }
+            lstActivity.EndUpdate();
+        }
+
+        private void RefreshActivity(object? sender, EventArgs e)
+        {
+            activityLimit = 5;
+            RefreshActivityGrid();
+        }
+
+        private void ShowMoreActivity(object? sender, EventArgs e)
+        {
+            activityLimit = 10;
+            RefreshActivityGrid();
+        }
+
+        private void InitializeTopicsList()
+        {
+            // Create label
+            lblTopics = new Label
+            {
+                Text = "Topics (double-click to ask):",
+                Font = new Font("Consolas", 9F, FontStyle.Bold),
+                AutoSize = true,
+                ForeColor = SystemColors.Highlight,
+                Location = new Point(rtbChatHistory.Right + 20, rtbChatHistory.Top)
+            };
+            Controls.Add(lblTopics);
+
+            // Create listbox
+            lstTopics = new ListBox
+            {
+                Location = new Point(rtbChatHistory.Right + 20, lblTopics.Bottom + 6),
+                Size = new Size(300, rtbChatHistory.Height - 24),
+                Font = new Font("Consolas", 9F, FontStyle.Regular)
+            };
+
+            // Populate from KeywordResponder (local instance for UI list)
+            try
+            {
+                var kr = new KeywordResponder();
+                var topics = kr.GetTopics();
+                if (topics != null)
+                {
+                    foreach (var t in topics)
+                        lstTopics.Items.Add(t);
+                }
+            }
+            catch
+            {
+                // ignore populate errors for UI helper
+            }
+
+            lstTopics.DoubleClick += LstTopics_DoubleClick;
+            Controls.Add(lstTopics);
+        }
+
+        private void InitializeSentimentIndicator()
+        {
+            // Place the sentiment indicator near the Send button (runtime to avoid designer change)
+            lblSentiment = new Label
+            {
+                Text = "Sentiment: Neutral",
+                Font = new Font("Consolas", 9F, FontStyle.Bold),
+                AutoSize = true,
+                ForeColor = Color.Gray,
+                Location = new Point(btnSend.Right + 14, btnSend.Top + 6)
+            };
+            Controls.Add(lblSentiment);
+
+            // Matched words label appears beneath the sentiment label
+            lblSentimentMatches = new Label
+            {
+                Text = "Matched: ",
+                Font = new Font("Consolas", 8F, FontStyle.Regular),
+                AutoSize = true,
+                ForeColor = Color.DarkGray,
+                Location = new Point(lblSentiment.Left, lblSentiment.Bottom + 4)
+            };
+            Controls.Add(lblSentimentMatches);
+        }
+
+        private void UpdateSentimentIndicator(Sentiment s)
+        {
+            if (lblSentiment == null)
+                return;
+
+            lblSentiment.Text = $"Sentiment: {s}";
+
+            lblSentiment.ForeColor = s switch
+            {
+                Sentiment.Worried => Color.OrangeRed,
+                Sentiment.Frustrated => Color.Red,
+                Sentiment.Curious => Color.MediumBlue,
+                _ => Color.Gray
+            };
+        }
+
+        private void UpdateSentimentMatches(System.Collections.Generic.List<string> matches)
+        {
+            if (lblSentimentMatches == null)
+                return;
+
+            if (matches == null || matches.Count == 0)
+            {
+                lblSentimentMatches.Text = "Matched: (none)";
+                return;
+            }
+
+            lblSentimentMatches.Text = "Matched: " + string.Join(", ", matches);
+        }
+
+        private void LstTopics_DoubleClick(object? sender, EventArgs e)
+        {
+            if (lstTopics?.SelectedItem is string topic && !string.IsNullOrWhiteSpace(topic))
+            {
+                // Put topic into input and send it (simulates user asking)
+                txtUserInput.Text = topic;
+                SendMessage();
+            }
+        }
+
+        private void PlayGreeting()
+        {
+            try
+            {
+                // Look for asset in published output first
+                string baseDir = AppDomain.CurrentDomain.BaseDirectory ?? Directory.GetCurrentDirectory();
+                string path = Path.Combine(baseDir, "Assets", "greeting.wav");
+
+                // Fallback to project relative path for debug/run-from-IDE scenarios
+                if (!File.Exists(path))
+                {
+                    path = Path.Combine(baseDir, "..", "..", "..", "Assets", "greeting.wav");
+                    path = Path.GetFullPath(path);
+                }
+
+                if (File.Exists(path))
+                {
+                    using SoundPlayer player = new SoundPlayer(path);
+                    player.Load();
+                    player.Play(); // non-blocking
+                }
+            }
+            catch
+            {
+                // Swallow exceptions so audio failures do not crash the app or tests
+            }
+        }
+
+        private void btnSend_Click(object sender, EventArgs e)
+        {
+            SendMessage();
+        }
+
+        // ENTER KEY FIX
+        private void TxtUserInput_KeyDown(object? sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Enter)
+            {
+                e.SuppressKeyPress = true; // stops ding sound
+                SendMessage();
+            }
+        }
+
+        private void ChatbotForm_KeyDown(object? sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Enter)
+            {
+                SendMessage();
+            }
+        }
+
+        private void SendMessage()
+        {
+            string input = txtUserInput.Text.Trim();
+
+            // BLANK TEST FIX
+            if (string.IsNullOrWhiteSpace(input))
+            {
+                rtbChatHistory.AppendText($"[{DateTime.Now:HH:mm}] Bot: Please type a question or cybersecurity topic first.\n\n");
+                txtUserInput.Clear();
+                txtUserInput.Focus();
+                return; // no crash
+            }
+
+            // Show user message
+            rtbChatHistory.AppendText($"[{DateTime.Now:HH:mm}] User: {input}\n\n");
+
+            if (HandlePart3Command(input))
+            {
+                txtUserInput.Clear();
+                txtUserInput.Focus();
+                return;
+            }
+
+            // Step C: analyze sentiment and show matches
+            try
+            {
+                // FIX: Only pass the Sentiment enum to UpdateSentimentIndicator
+                var sentiment = chatBot.AnalyzeSentiment(input);
+                UpdateSentimentIndicator(sentiment);
+
+                // Remove or replace UpdateSentimentMatches if you do not have a list of matches
+                // UpdateSentimentMatches(sentiment.Matches); // <-- This line removed or needs correct data
+            }
+            catch
+            {
+                // ignore UI sentiment failures
+            }
+
+            // Continue with existing processing
+            string botResponse = string.Empty;
+            try
+            {
+                botResponse = chatBot.ProcessInput(input) ?? string.Empty;
+                activityLogger.Log("Chat", input, "Response generated");
+                RefreshActivityGrid();
+            }
+            catch (Exception)
+            {
+                botResponse = "Sorry, something went wrong while processing your request.";
+                DisplayBotResponse(botResponse);
+                txtUserInput.Clear();
+                txtUserInput.Focus();
+                return;
+            }
+
+            if (!string.IsNullOrEmpty(botResponse))
+            {
+                string lastBotLine = GetLastBotLine();
+                if (!string.Equals(lastBotLine, botResponse, StringComparison.Ordinal))
+                    DisplayBotResponse(botResponse);
+            }
+
+            txtUserInput.Clear();
+            txtUserInput.Focus();
+        }
+
+        private bool HandlePart3Command(string input)
+        {
+            IntentResult result = nlpProcessor.DetectIntent(input);
+            switch (result.Intent)
+            {
+                case UserIntent.StartQuiz:
+                    tabChat.SelectedTab = tabPage2;
+                    StartQuiz();
+                    activityLogger.Log("NLP", input, "Quiz started");
+                    DisplayBotResponse("I have started the cybersecurity quiz.");
+                    RefreshActivityGrid();
+                    return true;
+
+                case UserIntent.ShowTasks:
+                    tabChat.SelectedTab = tabPage1;
+                    RefreshTasks();
+                    activityLogger.Log("NLP", input, "Tasks displayed");
+                    DisplayBotResponse("Here are your saved cybersecurity tasks.");
+                    RefreshActivityGrid();
+                    return true;
+
+                case UserIntent.ShowActivityLog:
+                    if (activityPage is not null)
+                        tabChat.SelectedTab = activityPage;
+                    activityLimit = 5;
+                    RefreshActivityGrid();
+                    activityLogger.Log("NLP", input, "Activity log displayed");
+                    DisplayBotResponse("Here are your recent actions.");
+                    RefreshActivityGrid();
+                    return true;
+
+                case UserIntent.AddTask:
+                case UserIntent.AddTaskWithReminder:
+                    return AddTaskFromCommand(input, result);
+
+                case UserIntent.CybersecurityQuestion:
+                    return false;
+
+                default:
+                    return false;
+            }
+        }
+
+        private bool AddTaskFromCommand(string input, IntentResult result)
+        {
+            if (string.IsNullOrWhiteSpace(result.TaskTitle))
+            {
+                DisplayBotResponse("Please include a task title, for example: remind me to review my passwords tomorrow.");
+                return true;
+            }
+
+            CyberTask task = new()
+            {
+                Title = result.TaskTitle,
+                Description = result.TaskTitle,
+                ReminderAt = result.ReminderDate
+            };
+
+            try
+            {
+                taskRepository.Add(task);
+                string action = result.ReminderDate.HasValue
+                    ? $"Task added with reminder: {task.Title} - {result.ReminderDate:dd MMM yyyy}"
+                    : $"Task added: {task.Title}";
+                activityLogger.Log("NLP", input, action);
+                tabChat.SelectedTab = tabPage1;
+                RefreshTasks();
+                RefreshActivityGrid();
+                DisplayBotResponse(result.ReminderDate.HasValue
+                    ? $"Task added with a reminder for {result.ReminderDate:dd MMM yyyy}."
+                    : "Task added successfully.");
+            }
+            catch (Exception ex)
+            {
+                DisplayBotResponse($"I could not save that task: {ex.Message}");
+            }
+
+            return true;
+        }
+
+        private string GetLastBotLine()
+        {
+            try
+            {
+                var text = rtbChatHistory.Text;
+                if (string.IsNullOrEmpty(text))
+                    return string.Empty;
+
+                // Find last "Bot: " occurrence
+                int idx = text.LastIndexOf("Bot: ");
+                if (idx < 0)
+                    return string.Empty;
+
+                int start = idx + "Bot: ".Length;
+                int end = text.IndexOf('\n', start);
+                if (end < 0) end = text.Length;
+                return text.Substring(start, end - start).Trim();
+            }
+            catch
+            {
+                return string.Empty;
+            }
+        }
+
+        // This is called by ChatBot via delegate
+        private void DisplayBotResponse(string message)
+        {
+            if (string.IsNullOrEmpty(message))
+                return;
+
+            rtbChatHistory.AppendText($"[{DateTime.Now:HH:mm}] Bot: {message}\n\n");
+            rtbChatHistory.ScrollToCaret();
+        }
+
+        private void rtbBanner_TextChanged(object sender, EventArgs e)
+        {
+
+        }
+
+        private void tabPage1_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void tabPage4_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void tabPage5_Click(object sender, EventArgs e)
+        {
+
+        }
+    }
+}
