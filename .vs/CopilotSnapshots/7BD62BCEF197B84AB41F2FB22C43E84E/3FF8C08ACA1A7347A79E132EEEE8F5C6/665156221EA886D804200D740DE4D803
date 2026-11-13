@@ -1,0 +1,97 @@
+﻿# Cyber Safety Awareness Chatbot
+
+Student: Nokuthula Innocentia Mtsweni  
+Module: PROG6221, 2026
+
+## Overview
+
+This solution contains a .NET 8 Windows Forms chatbot that provides practical cybersecurity awareness guidance. The chatbot supports keyword recognition, varied responses, conversational follow-ups, session memory, sentiment-aware replies, a voice greeting, and an ASCII banner.
+
+## Projects
+
+- `CyberSafetyChatbotGUI` - the submitted Windows Forms application and primary user interface.
+- `CyberSafetyChatbot` - a separate console version containing the original command-line implementation.
+
+The solution file references both projects. Build the Windows Forms project to run the graphical application.
+
+## Windows Forms features
+
+- Password, phishing, scam, privacy, malware, safe-browsing, security, VPN, and link topics.
+- Multiple responses per topic with immediate-response repetition avoided.
+- Follow-ups such as `tell me more`, `give me another tip`, and `what else` use the current topic.
+- Session memory understands statements such as `My name is ...`, `I am interested in ...`, `My favourite topic is ...`, and `I like ...`.
+- Recall prompts include `What is my name?`, `What is my favourite topic?`, and `Do you remember what I told you?`.
+- Worried, curious, and frustrated messages receive supportive follow-up prompts.
+- Topics can be entered manually or selected by double-clicking the topic list.
+- `Assets/greeting.wav` is copied to the output directory and played without blocking the interface.
+
+## Part 3 features
+
+- **Task management:** Add, view, complete/reopen by double-clicking, and delete cybersecurity tasks. Optional reminders are stored with each task.
+- **MySQL persistence:** Run `database_setup.sql` in MySQL, then set the `CYBERSAFETY_MYSQL_CONNECTION` environment variable before launching the GUI. If the variable is not set, the application uses an in-memory repository so the rest of the demonstration remains usable.
+- **Cybersecurity quiz:** Five scenario-based questions provide immediate explanations and a running score.
+- **NLP simulation:** The NLP tab identifies common intents, extracts cybersecurity entities, and reports a confidence score. This is intentionally a local simulation and does not send data to an external service.
+- **Activity log:** Chat messages, task changes, quiz answers, and NLP analyses are recorded in the current session.
+
+Example MySQL configuration:
+
+```text
+CYBERSAFETY_MYSQL_CONNECTION=Server=localhost;Port=3306;Database=cyber_safety_chatbot;User ID=your_user;Password=your_password;
+```
+
+The schema is in `database_setup.sql`. The GUI references `MySqlConnector` and does not include credentials in source control.
+
+## Running the application
+
+1. Open `CyberSafetyChatbot.sln` in Visual Studio.
+2. Select `CyberSafetyChatbotGUI` as the startup project.
+3. Build the solution or run `dotnet build` from the solution directory.
+4. Press F5.
+
+The application targets `net8.0-windows` and requires Windows for Windows Forms and `System.Media.SoundPlayer` support.
+
+Example inputs:
+
+- `password`
+- `How do I identify phishing?`
+- `safe browsing`
+- `I am interested in privacy`
+- `What is my favourite topic?`
+- `tell me more`
+- `I am worried that my account was hacked`
+
+## Structure
+
+```text
+CyberSafetyChatbot/
+├── CyberSafetyChatbot.sln
+├── CyberSafetyChatbot.csproj              # Console project
+├── CyberSafetyChatbotGUI/                 # Windows Forms project
+│   ├── ChatbotForm.cs                     # Main UI and user interaction
+│   ├── KeywordResponder.cs                # Topics and varied responses
+│   ├── Models/                             # Tasks, quiz, and activity contracts
+│   ├── Data/                               # MySQL and in-memory task repositories
+│   ├── Services/Chatbotcs.cs              # Conversation orchestration
+│   ├── Services/MemoryStore.cs            # Session memory
+│   ├── Services/SentimentDetector.cs      # Sentiment recognition
+│   ├── Services/QuizManager.cs             # Quiz scoring
+│   ├── Services/NlpProcessor.cs            # Local NLP simulation
+│   ├── Services/ActiviyLogger.cs           # Session activity log
+│   └── Assets/greeting.wav
+├── database_setup.sql                       # MySQL schema and seed task
+└── .github/workflows/ci.yml               # .NET 8 CI build
+```
+
+## Continuous integration
+
+The GitHub Actions workflow restores and builds the .NET 8 solution on Windows. Local verification can be performed with:
+
+```bash
+dotnet build CyberSafetyChatbot.sln
+```
+
+## References
+
+- Microsoft, [SoundPlayer Class](https://learn.microsoft.com/en-us/dotnet/api/system.media.soundplayer).
+- Microsoft, [How to: Play a Sound from a Windows Form](https://learn.microsoft.com/en-us/dotnet/desktop/winforms/media/how-to-play-a-sound).
+
