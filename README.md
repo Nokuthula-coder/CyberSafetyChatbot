@@ -1,4 +1,4 @@
-<img width="3060" height="4080" alt="1000028583" src="https://github.com/user-attachments/assets/50e15fad-2b15-4146-ba7b-0d67129357e5" /># PROG6221 Programming 2A -Final POE 
+# PROG6221 Programming 2A -Final POE 
 
 ## Student Details
 Name: Nokuthula Innocentia Mtsweni, Student Number: ST10499051
@@ -56,6 +56,8 @@ Example commands:
   
 
 ## Evidence Screenshot 
+<img width="3060" height="4080" alt="1000028583" src="https://github.com/user-attachments/assets/63fc3bdb-4b2c-4cf3-b1b5-842a8c1067a4" />
+
 ![Uploading 1000028583.jp
 <img width="3060" height="4080" alt="1000028591" src="https://github.com/user-attachments/assets/c44c98c0-ef02-4c31-af93-76778a406090" />
 <img width="3060" height="4080" alt="1000028590" src="https://github.com/user-attachments/assets/7f4cbdd7-dcff-4b77-b80c-563983ef6556" />
