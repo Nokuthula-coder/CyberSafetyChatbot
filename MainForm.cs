@@ -1,4 +1,4 @@
-using MySql.Data.MySqlClient;
+using MySqlConnector;
 using CyberSafetyChatbotGUI.Services;
 using CyberSafetyChatbotGUI.Data;
 using CyberSafetyChatbotGUI.Models;
@@ -87,16 +87,16 @@ namespace CyberSafetyChatbotGUI
             rtbBanner.Font = new Font("Consolas", 9, FontStyle.Bold);
             rtbBanner.ReadOnly = true;
             rtbBanner.Text = @"
-   ----                     _____     __           ____     ___   
-  / __/__ ______ _________ / ___/_ __/ /  ___ ____/ __/__ _/ _/__ 
- _\ \/ -_) __/ // / __/ -_) /__/ // / _ \/ -_) __/\ \/ _ `/ _/ -_)
-/___/\__/\__/\_,_/_/  \__/\___/\_, /_.__/\__/_/ /___/\_,_/_/ \__/ 
-                              /___/                               
+    ----                     _____     __           ____     ___   
+   / __/__ ______ _________ / ___/_ __/ /  ___ ____/ __/__ _/ _/__ 
+  _\ \/ -_) __/ // / __/ -_) /__/ // / _ \/ -_) __/\ \/ _ `/ _/ -_)
+ /___/\__/\__/\_,_/_/  \__/\___/\_, /_.__/\__/_/ /___/\_,_/_/ \__/ 
+                               /___/                               
 
-                     STAY SAFE ONLINE!";
+                      STAY SAFE ONLINE!";
 
             // Welcome message
-            rtbChatHistory.AppendText($"[{DateTime.Now:HH:mm}] Bot: Hello! I am CyberSafetyChatbot. I can help you with tips to stay safe online. Ask me about passwords, phishing, malware, privacy, or links.\n\n");
+            rtbChatHistory.AppendText($"[{DateTime.Now:HH:mm}] Bot: Hello! I am CyberSafetyChatbot. I can help you with tips to stay safe online. Ask me about passwords, phishing, malware, privacy");
 
             // Attempt to play greeting (non-fatal)
             PlayGreeting();
@@ -399,10 +399,10 @@ namespace CyberSafetyChatbotGUI
             if (index >= quizManager.Questions.Count)
             {
                 lblQuizQuestion!.Text = $"Quiz complete. Final score: {quizManager.Score}/{quizManager.Questions.Count}";
-            foreach (RadioButton option in quizOptionButtons)
-                option.Visible = false;
-            btnSubmitQuizAnswer!.Enabled = false;
-            btnNextQuestion!.Enabled = false;
+                foreach (RadioButton option in quizOptionButtons)
+                    option.Visible = false;
+                btnSubmitQuizAnswer!.Enabled = false;
+                btnNextQuestion!.Enabled = false;
                 return;
             }
 
