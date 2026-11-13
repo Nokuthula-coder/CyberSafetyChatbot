@@ -57,8 +57,8 @@ Example commands:
 
 ## Evidence Screenshot 
 <img width="3060" height="4080" alt="1000028583" src="https://github.com/user-attachments/assets/63fc3bdb-4b2c-4cf3-b1b5-842a8c1067a4" />
+<img width="1920" height="1116" alt="Screenshot 2026-11-13 at 16-13-05 Tags · Nokuthula-coder_CyberSafetyChatbot" src="https://github.com/user-attachments/assets/ed699760-2ef6-4b26-b185-db50decdfb3c" />
 
-![Uploading 1000028583.jp
 <img width="3060" height="4080" alt="1000028591" src="https://github.com/user-attachments/assets/c44c98c0-ef02-4c31-af93-76778a406090" />
 <img width="3060" height="4080" alt="1000028590" src="https://github.com/user-attachments/assets/7f4cbdd7-dcff-4b77-b80c-563983ef6556" />
 <img width="3060" height="4080" alt="1000028586" src="https://github.com/user-attachments/assets/545bf2bd-008b-4f36-92f4-3985cbdb3719" />
