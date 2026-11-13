@@ -1,41 +1,26 @@
-name: .NET CI
+name: CI
+
 on:
   push:
+    branches: [ main ]
   pull_request:
+    branches: [ main ]
 
 jobs:
   build:
     runs-on: windows-latest
+
     steps:
-      - uses: actions/checkout@v4
+    - uses: actions/checkout@v4
 
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: '8.0.x'
+    - name: Setup MSBuild
+      uses: microsoft/setup-msbuild@v2
 
-      - name: Build projects or solutions
-        shell: pwsh
-        run: |
-          $projects = Get-ChildItem -Path . -Filter *.csproj -Recurse -File -ErrorAction SilentlyContinue
+    - name: Setup NuGet
+      uses: NuGet/setup-nuget@v2
 
-          if ($projects) {
-            foreach ($p in $projects) {
-              Write-Host "Restoring and building project: $($p.FullName)"
-              dotnet restore $p.FullName
-              dotnet build $p.FullName --no-restore --configuration Release
-            }
-            exit 0
-          }
+    - name: Restore NuGet packages
+      run: nuget restore CyberSecurityAwarenessBot.sln
 
-          $solutions = Get-ChildItem -Path . -Filter *.sln -Recurse -File -ErrorAction SilentlyContinue
-          if (-not $solutions) {
-            Write-Error "No .csproj or .sln files found in the repository."
-            exit 1
-          }
-
-          foreach ($s in $solutions) {
-            Write-Host "Restoring and building solution: $($s.FullName)"
-            dotnet restore $s.FullName
-            dotnet build $s.FullName --no-restore --configuration Release
-          }
+    - name: Build Solution
+      run: msbuild CyberSecurityAwarenessBot.sln /p:Configuration=Release
