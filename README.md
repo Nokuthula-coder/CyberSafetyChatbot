@@ -1,4 +1,4 @@
-# PROG6221 Programming 2A -Final POE 
+<img width="3060" height="4080" alt="1000028583" src="https://github.com/user-attachments/assets/50e15fad-2b15-4146-ba7b-0d67129357e5" /># PROG6221 Programming 2A -Final POE 
 
 ## Student Details
 Name: Nokuthula Innocentia Mtsweni, Student Number: ST10499051
@@ -53,29 +53,21 @@ Example commands:
 - v1.0-part1
 - v2.0-part2
 - v3.0-final
+  
+
+## Evidence Screenshot 
+![Uploading 1000028583.jp
+<img width="3060" height="4080" alt="1000028591" src="https://github.com/user-attachments/assets/c44c98c0-ef02-4c31-af93-76778a406090" />
+<img width="3060" height="4080" alt="1000028590" src="https://github.com/user-attachments/assets/7f4cbdd7-dcff-4b77-b80c-563983ef6556" />
+<img width="3060" height="4080" alt="1000028586" src="https://github.com/user-attachments/assets/545bf2bd-008b-4f36-92f4-3985cbdb3719" />
+<img width="3060" height="4080" alt="1000028585" src="https://github.com/user-attachments/assets/fe9c502a-ad3a-4b57-8439-99566290b93d" />
+<img width="3060" height="4080" alt="1000028584" src="https://github.com/user-attachments/assets/43182a79-3b93-41c8-8ffa-5dc8f628ab48" />
+g…]()
 
 ## YouTube Video Link
 
 Video demonstration of all features:
-https://youtu.be/txvBXci2mnl
-
-Video shows:
-- Voice greeting playing
-- ASCII art display
-- Name input and validation
-- All chatbot responses including phishing fix and {userName} interpolation with $ sign
-- Exit command
-
-## References
-
-- Pieterse, H., 2021. The Cyber Threat Landscape in South Africa: A 10-Year Review. _The African Journal of Information and Communication (AJIC)_, 28, pp.1-12.
-
-- Microsoft, 2024. _SoundPlayer Class (System.Media)_. Available at: https://learn.microsoft.com/en-us/dotnet/api/system.media.soundplayer [Accessed: 10 May 2025]
-
-- Microsoft, 2024. _How to: Play a Sound from a Windows Form_. Available at: https://learn.microsoft.com/en-us/dotnet/desktop/winforms/media/how-to-play-a-sound [Accessed: 10 May 2025]
-
-- GeeksforGeeks, 2023. _C# | String Interpolation_. Available at: https://www.geeksforgeeks.org/c-sharp-string-interpolation/ [Accessed: 10 May 2025]
-
+https://youtu.be/J0XZI6Cp2SA?si=jydnixuRetOOEUad
 
 ## Author
 
